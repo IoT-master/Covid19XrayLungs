@@ -5,14 +5,12 @@ from torch.utils import data
 
 class Dataset(data.Dataset):
   'Characterizes a dataset for PyTorch'
-  def __init__(self, list_IDs, labels):
+  def __init__(self):
         'Initialization'
-        self.labels = labels
-        self.list_IDs = list_IDs
 
   def __len__(self):
         'Denotes the total number of samples'
-        return len(self.list_IDs)
+        return len(shape)
 
   def __getitem__(self, index):
         'Generates one sample of data'
