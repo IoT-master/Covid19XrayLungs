@@ -130,4 +130,3 @@ dmypy.json
 .vscode
 datasets
 *.gz
-lightning_logs/
