@@ -98,25 +98,25 @@ class CovidLungsDataset(Dataset):
 class XRayModel(LightningModule):
     def __init__(self):
         super(XRayModel, self).__init__()
-        self.conv1 = nn.Conv2d(1, 100, 5, 1)
-        self.conv2 = nn.Conv2d(100, 50, 5, 1)        
-        self.conv3 = nn.Conv2d(50, 25, 6, 1)  
-        self.fc1 = nn.Linear(25*21*21, 32)
-        self.fc2 = nn.Linear(32, 15)
+        self.conv1 = nn.Conv2d(1, 15, 101, 1)
+        self.conv2 = nn.Conv2d(15, 10, 6, 1)        
+        self.conv3 = nn.Conv2d(10, 5, 2, 1)
+        self.fc1 = nn.Linear(3**2*5, 20)
+        self.fc2 = nn.Linear(20, 15)
 
     def forward(self, x):
-        x = F.relu(self.conv1(x)) # [b, 1, 200, 200] ==> [b, 100, 196, 196]
-        x = F.max_pool2d(x, 2, 2) # [b, 100, 196, 196] ==> [b, 100, 98, 98]
-        x = F.relu(self.conv2(x)) # [b, 100, 98, 98] ==> [b, 50, 94, 94]
-        x = F.max_pool2d(x, 2, 2) # [b, 50, 94, 94] ==> [b, 50, 47, 47]
-        x = F.relu(self.conv3(x)) # [b, 50, 47, 47] ==> [b, 25, 42, 42]
-        x = F.max_pool2d(x, 2, 2) # [b, 25, 42, 42] ==> [b, 25, 21, 21]
-        x = x.view(-1, 25*21*21)  # [b, 25, 42, 42] ==> [b, 25x42x42]
+        x = F.relu(self.conv1(x)) # [b, 1, 200, 200] ==> [b, 15, 100, 100]
+        x = F.max_pool2d(x, 4, 4) # [b, 15, 100, 100] ==> [b, 15, 25, 25]
+        x = F.relu(self.conv2(x)) # [b, 15, 25, 25] ==> [b, 10, 20, 20]
+        x = F.max_pool2d(x, 2, 2) # [b, 10, 20, 20] ==> [b, 10, 10, 10]
+        x = F.relu(self.conv3(x)) # [b, 10, 10, 10] ==> [b, 5, 9, 9]
+        x = F.max_pool2d(x, 3, 3) # [b, 5, 9, 9] ==> [b, 5, 3, 3]
+        x = x.view(-1, 3**2*5)
         x = F.relu(self.fc1(x))  
         x = self.fc2(x)
         # # There's no activation at the final layer because of the criterion of CEL
-#         return x
-        return torch.log_softmax(x, dim=-1)
+        return x
+        # return torch.log_softmax(x, dim=-1)
 
     def training_step(self, batch, batch_idx):
         images = batch['image']
@@ -154,9 +154,35 @@ class XRayModel(LightningModule):
         
 
 model = XRayModel()
+# model = XRayModel.load_from_checkpoint(checkpoint_path="lightning_logs/version_0/checkpoints/epoch=0.ckpt")
 trainer = Trainer()
 # trainer = Trainer(gpus=1)
 trainer.fit(model)
+
+# model = XRayModel.load_from_checkpoint(
+#     checkpoint_path="lightning_logs/version_0/checkpoints/epoch=0.ckpt")
+# trainer = Trainer()
+# # trainer.test(model)
+
+# import platform
+# my_path = "../Datasets/Lungs_Dataset/Xray" if platform.system() == 'Windows' else "datasets/data/images"
+# test_df = pd.read_csv('test_df2.csv')
+
+# my_test_set = CovidLungsDataset(test_df, my_path, transform=tf.Compose([
+#         RescaleImage(200),
+#         ToTensor()
+# ]))
+
+# sample = my_test_set.__getitem__(1)
+# image = sample['image']
+# label = sample['label']
+# sample_input = image.unsqueeze(0)
+# print(sample_input.shape)
+# model = XRayModel()
+# pred = model(sample_input)
+# print(pred.shape)
+# print(pred, label)
+
 
 # import platform
 # my_path = "../Datasets/Lungs_Dataset/Xray" if platform.system() == 'Windows' else "datasets/data/images"
