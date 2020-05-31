@@ -115,20 +115,22 @@ class XRayModel(LightningModule):
         x = F.relu(self.fc1(x))  
         x = self.fc2(x)
         # # There's no activation at the final layer because of the criterion of CEL
-        return x
-        # return torch.log_softmax(x, dim=-1)
+        # return x
+        return torch.log_softmax(x, dim=-1)
 
     def training_step(self, batch, batch_idx):
         images = batch['image']
         labels = batch['label']
 
         preds = self(images)
-        loss = F.cross_entropy(preds, labels)
+        
+        # loss = F.cross_entropy(preds, labels)
+        loss = F.nll_loss(preds, labels)
         tensorboard_logs = {'train_loss': loss}
         return {'loss': loss, 'log': tensorboard_logs}
 
     def configure_optimizers(self):
-        return optim.Adam(self.parameters(), lr=0.01)
+        return optim.SGD(self.parameters(), lr=0.001)
 
     def train_dataloader(self):
         import platform
@@ -159,8 +161,7 @@ trainer = Trainer()
 # trainer = Trainer(gpus=1)
 trainer.fit(model)
 
-# model = XRayModel.load_from_checkpoint(
-#     checkpoint_path="lightning_logs/version_0/checkpoints/epoch=0.ckpt")
+# model = XRayModel.load_from_checkpoint(checkpoint_path="lightning_logs/version_0/checkpoints/epoch=0.ckpt")
 # trainer = Trainer()
 # # trainer.test(model)
 
@@ -178,7 +179,6 @@ trainer.fit(model)
 # label = sample['label']
 # sample_input = image.unsqueeze(0)
 # print(sample_input.shape)
-# model = XRayModel()
 # pred = model(sample_input)
 # print(pred.shape)
 # print(pred, label)
