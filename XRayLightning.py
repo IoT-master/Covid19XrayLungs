@@ -98,20 +98,23 @@ class CovidLungsDataset(Dataset):
 class XRayModel(LightningModule):
     def __init__(self):
         super(XRayModel, self).__init__()
-        self.conv1 = nn.Conv2d(1, 15, 101, 1)
-        self.conv2 = nn.Conv2d(15, 10, 6, 1)        
-        self.conv3 = nn.Conv2d(10, 5, 2, 1)
-        self.fc1 = nn.Linear(3**2*5, 20)
+        self.conv1 = nn.Conv2d(1, 15, 21, 1)
+        self.conv2 = nn.Conv2d(15, 10, 21, 1)  
+        self.conv3 = nn.Conv2d(10, 5, 6, 1)        
+        self.conv4 = nn.Conv2d(5, 3, 6, 1)
+        self.fc1 = nn.Linear(5**2*3, 20)
         self.fc2 = nn.Linear(20, 15)
 
     def forward(self, x):
-        x = F.relu(self.conv1(x)) # [b, 1, 200, 200] ==> [b, 15, 100, 100]
-        x = F.max_pool2d(x, 4, 4) # [b, 15, 100, 100] ==> [b, 15, 25, 25]
-        x = F.relu(self.conv2(x)) # [b, 15, 25, 25] ==> [b, 10, 20, 20]
-        x = F.max_pool2d(x, 2, 2) # [b, 10, 20, 20] ==> [b, 10, 10, 10]
-        x = F.relu(self.conv3(x)) # [b, 10, 10, 10] ==> [b, 5, 9, 9]
-        x = F.max_pool2d(x, 3, 3) # [b, 5, 9, 9] ==> [b, 5, 3, 3]
-        x = x.view(-1, 3**2*5)
+        x = F.relu(self.conv1(x)) # [b, 1, 200, 200] ==> [b, 15, 180, 180]
+        x = F.max_pool2d(x, 2, 2) # [b, 15, 180, 180] ==> [b, 15, 90, 90]
+        x = F.relu(self.conv2(x)) # [b, 15, 90, 90] ==> [b, 10, 70, 70]        
+        x = F.max_pool2d(x, 2, 2) # [b, 10, 70, 70] ==> [b, 10, 35, 35]
+        x = F.relu(self.conv3(x)) # [b, 10, 35, 35] ==> [b, 5, 30, 30]
+        x = F.max_pool2d(x, 2, 2) # [b, 5, 30, 30] ==> [b, 5, 15, 15]
+        x = F.relu(self.conv4(x)) # [b, 5, 15, 15] ==> [b, 3, 10, 10]
+        x = F.max_pool2d(x, 2, 2) # [b, 3, 10, 10] ==> [b, 3, 5, 5]
+        x = x.view(-1, 5**2*3)
         x = F.relu(self.fc1(x))  
         x = self.fc2(x)
         # # There's no activation at the final layer because of the criterion of CEL
@@ -147,7 +150,7 @@ class XRayModel(LightningModule):
                 ToTensor()
         ]))
         batch_loader_params = {
-            "batch_size": 500,
+            "batch_size": 500 if platform.system() == 'Windows' else 20,
             "shuffle": True,
             "num_workers": 4
         }
@@ -155,10 +158,10 @@ class XRayModel(LightningModule):
         return dataloader
         
 if __name__ == "__main__":
-    # model = XRayModel()
-    model = XRayModel.load_from_checkpoint(checkpoint_path="lightning_logs/version_2/checkpoints/epoch=2.ckpt")
-    # trainer = Trainer()
-    trainer = Trainer(gpus=1)
+    model = XRayModel()
+    # model = XRayModel.load_from_checkpoint(checkpoint_path="lightning_logs/version_2/checkpoints/epoch=2.ckpt")
+    trainer = Trainer()
+    # trainer = Trainer(gpus=1)
     trainer.fit(model)
 
 # model = XRayModel.load_from_checkpoint(checkpoint_path="lightning_logs/version_0/checkpoints/epoch=0.ckpt")
