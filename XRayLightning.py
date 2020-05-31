@@ -130,7 +130,7 @@ class XRayModel(LightningModule):
         return {'loss': loss, 'log': tensorboard_logs}
 
     def configure_optimizers(self):
-        return optim.SGD(self.parameters(), lr=0.001)
+        return optim.SGD(self.parameters(), lr=0.0001)
 
     def train_dataloader(self):
         import platform
@@ -147,19 +147,19 @@ class XRayModel(LightningModule):
                 ToTensor()
         ]))
         batch_loader_params = {
-            "batch_size": 50,
+            "batch_size": 500,
             "shuffle": True,
-            "num_workers": 0 if platform.system() == 'Windows' else 4
+            "num_workers": 4
         }
         dataloader = DataLoader(my_train_dataset, **batch_loader_params)
         return dataloader
         
-
-model = XRayModel()
-# model = XRayModel.load_from_checkpoint(checkpoint_path="lightning_logs/version_0/checkpoints/epoch=0.ckpt")
-trainer = Trainer()
-# trainer = Trainer(gpus=1)
-trainer.fit(model)
+if __name__ == "__main__":
+    # model = XRayModel()
+    model = XRayModel.load_from_checkpoint(checkpoint_path="lightning_logs/version_2/checkpoints/epoch=2.ckpt")
+    # trainer = Trainer()
+    trainer = Trainer(gpus=1)
+    trainer.fit(model)
 
 # model = XRayModel.load_from_checkpoint(checkpoint_path="lightning_logs/version_0/checkpoints/epoch=0.ckpt")
 # trainer = Trainer()
