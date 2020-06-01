@@ -98,8 +98,8 @@ class CovidLungsDataset(Dataset):
 class XRayModel(LightningModule):
     def __init__(self):
         super(XRayModel, self).__init__()
-        self.conv1 = nn.Conv2d(1, 15, 21, 1)
-        self.conv2 = nn.Conv2d(15, 10, 21, 1)  
+        self.conv1 = nn.Conv2d(1, 20, 21, 1)
+        self.conv2 = nn.Conv2d(20, 10, 21, 1)  
         self.conv3 = nn.Conv2d(10, 5, 6, 1)        
         self.conv4 = nn.Conv2d(5, 3, 6, 1)
         self.fc1 = nn.Linear(5**2*3, 20)
@@ -118,8 +118,8 @@ class XRayModel(LightningModule):
         x = F.relu(self.fc1(x))  
         x = self.fc2(x)
         # # There's no activation at the final layer because of the criterion of CEL
-        # return x
-        return torch.log_softmax(x, dim=-1)
+        return x
+        # return torch.log_softmax(x, dim=-1)
 
     def training_step(self, batch, batch_idx):
         images = batch['image']
@@ -127,8 +127,8 @@ class XRayModel(LightningModule):
 
         preds = self(images)
         
-        # loss = F.cross_entropy(preds, labels)
-        loss = F.nll_loss(preds, labels)
+        loss = F.cross_entropy(preds, labels)
+        # loss = F.nll_loss(preds, labels)
         tensorboard_logs = {'train_loss': loss}
         return {'loss': loss, 'log': tensorboard_logs}
 
@@ -160,8 +160,8 @@ class XRayModel(LightningModule):
 if __name__ == "__main__":
     model = XRayModel()
     # model = XRayModel.load_from_checkpoint(checkpoint_path="lightning_logs/version_2/checkpoints/epoch=2.ckpt")
-    trainer = Trainer()
-    # trainer = Trainer(gpus=1)
+    # trainer = Trainer()
+    trainer = Trainer(gpus=1)
     trainer.fit(model)
 
 # model = XRayModel.load_from_checkpoint(checkpoint_path="lightning_logs/version_0/checkpoints/epoch=0.ckpt")
