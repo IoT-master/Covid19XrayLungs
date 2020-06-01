@@ -98,24 +98,24 @@ class CovidLungsDataset(Dataset):
 class XRayModel(LightningModule):
     def __init__(self):
         super(XRayModel, self).__init__()
-        self.conv1 = nn.Conv2d(1, 20, 21, 1)
-        self.conv2 = nn.Conv2d(20, 10, 21, 1)  
-        self.conv3 = nn.Conv2d(10, 5, 6, 1)        
-        self.conv4 = nn.Conv2d(5, 3, 6, 1)
-        self.fc1 = nn.Linear(5**2*3, 50)
+        self.conv1 = nn.Conv2d(1, 100, 21, 1)
+        self.conv2 = nn.Conv2d(100, 75, 21, 1)  
+        self.conv3 = nn.Conv2d(75, 50, 6, 1)        
+        self.conv4 = nn.Conv2d(50, 25, 6, 1)
+        self.fc1 = nn.Linear(5**2*25, 50)
         self.fc2 = nn.Linear(50, 20)
         self.fc3 = nn.Linear(20, 15)
 
     def forward(self, x):
-        x = F.relu(self.conv1(x)) # [b, 1, 200, 200] ==> [b, 15, 180, 180]
-        x = F.max_pool2d(x, 2, 2) # [b, 15, 180, 180] ==> [b, 15, 90, 90]
-        x = F.relu(self.conv2(x)) # [b, 15, 90, 90] ==> [b, 10, 70, 70]        
-        x = F.max_pool2d(x, 2, 2) # [b, 10, 70, 70] ==> [b, 10, 35, 35]
-        x = F.relu(self.conv3(x)) # [b, 10, 35, 35] ==> [b, 5, 30, 30]
-        x = F.max_pool2d(x, 2, 2) # [b, 5, 30, 30] ==> [b, 5, 15, 15]
-        x = F.relu(self.conv4(x)) # [b, 5, 15, 15] ==> [b, 3, 10, 10]
-        x = F.max_pool2d(x, 2, 2) # [b, 3, 10, 10] ==> [b, 3, 5, 5]
-        x = x.view(-1, 5**2*3)
+        x = F.relu(self.conv1(x)) # [b, 1, 200, 200] ==> [b, 100, 180, 180]
+        x = F.max_pool2d(x, 2, 2) # [b, 100, 180, 180] ==> [b, 100, 90, 90]
+        x = F.relu(self.conv2(x)) # [b, 100, 90, 90] ==> [b, 75, 70, 70]        
+        x = F.max_pool2d(x, 2, 2) # [b, 75, 70, 70] ==> [b, 75, 35, 35]
+        x = F.relu(self.conv3(x)) # [b, 75, 35, 35] ==> [b, 50, 30, 30]
+        x = F.max_pool2d(x, 2, 2) # [b, 50, 30, 30] ==> [b, 50, 15, 15]
+        x = F.relu(self.conv4(x)) # [b, 50, 15, 15] ==> [b, 25, 10, 10]
+        x = F.max_pool2d(x, 2, 2) # [b, 25, 10, 10] ==> [b, 25, 5, 5]
+        x = x.view(-1, 5**2*25)
         x = F.relu(self.fc1(x))  
         x = F.relu(self.fc2(x))
         x = self.fc3(x)
