@@ -102,8 +102,9 @@ class XRayModel(LightningModule):
         self.conv2 = nn.Conv2d(20, 10, 21, 1)  
         self.conv3 = nn.Conv2d(10, 5, 6, 1)        
         self.conv4 = nn.Conv2d(5, 3, 6, 1)
-        self.fc1 = nn.Linear(5**2*3, 20)
-        self.fc2 = nn.Linear(20, 15)
+        self.fc1 = nn.Linear(5**2*3, 50)
+        self.fc2 = nn.Linear(50, 20)
+        self.fc3 = nn.Linear(20, 15)
 
     def forward(self, x):
         x = F.relu(self.conv1(x)) # [b, 1, 200, 200] ==> [b, 15, 180, 180]
@@ -116,7 +117,8 @@ class XRayModel(LightningModule):
         x = F.max_pool2d(x, 2, 2) # [b, 3, 10, 10] ==> [b, 3, 5, 5]
         x = x.view(-1, 5**2*3)
         x = F.relu(self.fc1(x))  
-        x = self.fc2(x)
+        x = F.relu(self.fc2(x))
+        x = self.fc3(x)
         # # There's no activation at the final layer because of the criterion of CEL
         return x
         # return torch.log_softmax(x, dim=-1)
@@ -160,8 +162,8 @@ class XRayModel(LightningModule):
 if __name__ == "__main__":
     model = XRayModel()
     # model = XRayModel.load_from_checkpoint(checkpoint_path="lightning_logs/version_2/checkpoints/epoch=2.ckpt")
-    # trainer = Trainer()
-    trainer = Trainer(gpus=1)
+    trainer = Trainer()
+    # trainer = Trainer(gpus=1)
     trainer.fit(model)
 
 # model = XRayModel.load_from_checkpoint(checkpoint_path="lightning_logs/version_0/checkpoints/epoch=0.ckpt")
