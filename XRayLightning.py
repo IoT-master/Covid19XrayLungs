@@ -148,13 +148,14 @@ class XRayModel(LightningModule):
 
         preds = self(images)
         
-        loss = F.cross_entropy(preds, labels)
-        # loss = F.nll_loss(preds, labels)
+        # loss = F.cross_entropy(preds, labels)
+        loss = F.nll_loss(preds, labels)
         tensorboard_logs = {'train_loss': loss}
         return {'loss': loss, 'log': tensorboard_logs}
 
     def configure_optimizers(self):
-        return optim.SGD(self.parameters(), lr=0.01)
+        # return optim.SGD(self.parameters(), lr=0.01)
+        return optim.Adam(self.parameters(), lr=0.01)
 
     def train_dataloader(self):
         import platform
@@ -172,7 +173,7 @@ class XRayModel(LightningModule):
                 Normalize(129.7539, 64.6764)
         ]))
         batch_loader_params = {
-            "batch_size": 50 if platform.system() == 'Windows' else 5,
+            "batch_size": 75 if platform.system() == 'Windows' else 5,
             "shuffle": True,
             "num_workers": 4
         }
