@@ -109,13 +109,13 @@ class CovidLungsDataset(Dataset):
 class XRayModel(LightningModule):
     def __init__(self):
         super(XRayModel, self).__init__()
-        self.conv1 = nn.Conv2d(1, 100, 21, 1)
-        self.norm1 = nn.BatchNorm2d(100)
-        self.conv2 = nn.Conv2d(100, 75, 21, 1)  
-        self.norm2 = nn.BatchNorm2d(75)
-        self.conv3 = nn.Conv2d(75, 50, 6, 1)        
-        self.norm3 = nn.BatchNorm2d(50)
-        self.conv4 = nn.Conv2d(50, 25, 6, 1)
+        self.conv1 = nn.Conv2d(1, 50, 21, 1)
+        self.norm1 = nn.BatchNorm2d(50)
+        self.conv2 = nn.Conv2d(50, 45, 21, 1)  
+        self.norm2 = nn.BatchNorm2d(45)
+        self.conv3 = nn.Conv2d(45, 30, 6, 1)        
+        self.norm3 = nn.BatchNorm2d(30)
+        self.conv4 = nn.Conv2d(30, 25, 6, 1)
         self.norm4 = nn.BatchNorm2d(25)
         self.fc1 = nn.Linear(5**2*25, 50)
         self.fc2 = nn.Linear(50, 20)
@@ -172,7 +172,7 @@ class XRayModel(LightningModule):
                 Normalize(129.7539, 64.6764)
         ]))
         batch_loader_params = {
-            "batch_size": 50 if platform.system() == 'Windows' else 20,
+            "batch_size": 50 if platform.system() == 'Windows' else 5,
             "shuffle": True,
             "num_workers": 4
         }
