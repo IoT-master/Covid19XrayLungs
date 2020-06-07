@@ -112,8 +112,11 @@ class XRayModel(LightningModule):
     def __init__(self):
         super(XRayModel, self).__init__()
         self.conv1 = nn.Conv2d(1, 100, 21, 1)
+        self.norm1 = nn.BatchNorm2d(100)
         self.conv2 = nn.Conv2d(100, 75, 21, 1)  
+        self.norm2 = nn.BatchNorm2d(75)
         self.conv3 = nn.Conv2d(75, 50, 6, 1)        
+        self.norm3 = nn.BatchNorm2d(50)
         self.conv4 = nn.Conv2d(50, 25, 6, 1)
         self.fc1 = nn.Linear(5**2*25, 50)
         self.fc2 = nn.Linear(50, 20)
@@ -121,10 +124,13 @@ class XRayModel(LightningModule):
 
     def forward(self, x):
         x = F.relu(self.conv1(x)) # [b, 1, 200, 200] ==> [b, 100, 180, 180]
+        x = self.norm1(x)
         x = F.max_pool2d(x, 2, 2) # [b, 100, 180, 180] ==> [b, 100, 90, 90]
-        x = F.relu(self.conv2(x)) # [b, 100, 90, 90] ==> [b, 75, 70, 70]        
+        x = F.relu(self.conv2(x)) # [b, 100, 90, 90] ==> [b, 75, 70, 70]    
+        x = self.norm2(x)    
         x = F.max_pool2d(x, 2, 2) # [b, 75, 70, 70] ==> [b, 75, 35, 35]
         x = F.relu(self.conv3(x)) # [b, 75, 35, 35] ==> [b, 50, 30, 30]
+        x = self.norm3(x)
         x = F.max_pool2d(x, 2, 2) # [b, 50, 30, 30] ==> [b, 50, 15, 15]
         x = F.relu(self.conv4(x)) # [b, 50, 15, 15] ==> [b, 25, 10, 10]
         x = F.max_pool2d(x, 2, 2) # [b, 25, 10, 10] ==> [b, 25, 5, 5]
@@ -165,7 +171,7 @@ class XRayModel(LightningModule):
                 ToTensor()
         ]))
         batch_loader_params = {
-            "batch_size": 500 if platform.system() == 'Windows' else 20,
+            "batch_size": 50 if platform.system() == 'Windows' else 20,
             "shuffle": True,
             "num_workers": 4
         }
