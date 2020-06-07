@@ -19,8 +19,8 @@ class Normalize(object):
 
     def __call__(self, sample):
         image, label = sample['image'], sample['label']
-        image = torch.tensor((image - self.mean)/self.std)
-        return {'image': img, 'label': label}
+        image = (image - self.mean)/self.std
+        return {'image': image, 'label': label}
 
 class ToTensor(object):
     """Convert ndarrays in sample to Tensors."""
@@ -74,9 +74,7 @@ class RescaleImage(object):
 class CovidLungsDataset(Dataset):
     """Face Landmarks dataset."""
 
-    def __init__(self, dataframe, root_dir, transform=tf.Compose([
-        RescaleImage(200), ToTensor(), Normalize(129.7539, 64.6764)
-    ])):
+    def __init__(self, dataframe, root_dir, transform):
         """
         Args:
             csv_file (string): Path to the csv file with annotations.
@@ -156,7 +154,7 @@ class XRayModel(LightningModule):
         return {'loss': loss, 'log': tensorboard_logs}
 
     def configure_optimizers(self):
-        return optim.SGD(self.parameters(), lr=0.0001)
+        return optim.SGD(self.parameters(), lr=0.01)
 
     def train_dataloader(self):
         import platform
@@ -170,7 +168,8 @@ class XRayModel(LightningModule):
 
         my_train_dataset = CovidLungsDataset(train_df, my_path, transform=tf.Compose([
                 RescaleImage(200),
-                ToTensor()
+                ToTensor(),
+                Normalize(129.7539, 64.6764)
         ]))
         batch_loader_params = {
             "batch_size": 50 if platform.system() == 'Windows' else 20,
