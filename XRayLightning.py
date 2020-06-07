@@ -148,13 +148,13 @@ class XRayModel(LightningModule):
 
         preds = self(images)
         
-        loss = F.cross_entropy(preds, labels)
-        # loss = F.nll_loss(preds, labels)
+        # loss = F.cross_entropy(preds, labels)
+        loss = F.nll_loss(preds, labels)
         tensorboard_logs = {'train_loss': loss}
         return {'loss': loss, 'log': tensorboard_logs}
 
     def configure_optimizers(self):
-        return optim.SGD(self.parameters(), lr=0.01)
+        return optim.Adam(self.parameters(), lr=0.01)
 
     def train_dataloader(self):
         import platform
@@ -180,10 +180,10 @@ class XRayModel(LightningModule):
         return dataloader
         
 if __name__ == "__main__":
-    model = XRayModel()
-    # model = XRayModel.load_from_checkpoint(checkpoint_path="lightning_logs/version_2/checkpoints/epoch=2.ckpt")
-    trainer = Trainer()
-    # trainer = Trainer(gpus=1)
+    # model = XRayModel()
+    model = XRayModel.load_from_checkpoint(checkpoint_path="lightning_logs/version_0/checkpoints/epoch=1.ckpt")
+    # trainer = Trainer()
+    trainer = Trainer(gpus=1)
     trainer.fit(model)
 
 # model = XRayModel.load_from_checkpoint(checkpoint_path="lightning_logs/version_0/checkpoints/epoch=0.ckpt")
