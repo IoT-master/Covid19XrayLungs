@@ -118,6 +118,7 @@ class XRayModel(LightningModule):
         self.conv3 = nn.Conv2d(75, 50, 6, 1)        
         self.norm3 = nn.BatchNorm2d(50)
         self.conv4 = nn.Conv2d(50, 25, 6, 1)
+        self.norm4 = nn.BatchNorm2d(25)
         self.fc1 = nn.Linear(5**2*25, 50)
         self.fc2 = nn.Linear(50, 20)
         self.fc3 = nn.Linear(20, 15)
@@ -133,14 +134,15 @@ class XRayModel(LightningModule):
         x = self.norm3(x)
         x = F.max_pool2d(x, 2, 2) # [b, 50, 30, 30] ==> [b, 50, 15, 15]
         x = F.relu(self.conv4(x)) # [b, 50, 15, 15] ==> [b, 25, 10, 10]
+        x = self.norm4(x)
         x = F.max_pool2d(x, 2, 2) # [b, 25, 10, 10] ==> [b, 25, 5, 5]
         x = x.view(-1, 5**2*25)
         x = F.relu(self.fc1(x))  
         x = F.relu(self.fc2(x))
         x = self.fc3(x)
         # # There's no activation at the final layer because of the criterion of CEL
-        return x
-        # return torch.log_softmax(x, dim=-1)
+        # return x
+        return torch.log_softmax(x, dim=-1)
 
     def training_step(self, batch, batch_idx):
         images = batch['image']
