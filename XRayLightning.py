@@ -11,6 +11,17 @@ import pandas as pd
 from torch.utils.data import DataLoader, Dataset
 import torch.optim as optim
 
+
+class Normalize(object):
+    def __init__(self, mean, std):
+        self.mean = mean
+        self.std = std
+
+    def __call__(self, sample):
+        image, label = sample['image'], sample['label']
+        image = torch.tensor((image - self.mean)/self.std)
+        return {'image': img, 'label': label}
+
 class ToTensor(object):
     """Convert ndarrays in sample to Tensors."""
 
@@ -63,7 +74,9 @@ class RescaleImage(object):
 class CovidLungsDataset(Dataset):
     """Face Landmarks dataset."""
 
-    def __init__(self, dataframe, root_dir, transform=None):
+    def __init__(self, dataframe, root_dir, transform=tf.Compose([
+        RescaleImage(200), ToTensor(), Normalize(129.7539, 64.6764)
+    ])):
         """
         Args:
             csv_file (string): Path to the csv file with annotations.
