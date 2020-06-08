@@ -180,18 +180,18 @@ class XRayModel(LightningModule):
         dataloader = DataLoader(my_train_dataset, **batch_loader_params)
         return dataloader
 
-    def validation_step(self, batch, batch_idx):
+    def test_step(self, batch, batch_idx):
         images = batch['image']
         labels = batch['label']
         preds = self(images)
         return {'val_loss': F.nll_loss(preds, labels)}
 
-    def validation_epoch_end(self, outputs):
+    def test_epoch_end(self, outputs):
         avg_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
         tensorboard_logs = {'val_loss': avg_loss}
         return {'val_loss': avg_loss, 'log': tensorboard_logs}
 
-    def val_dataloader(self):
+    def test_dataloader(self):
         import platform
         my_path = "../Datasets/Lungs_Dataset/Xray" if platform.system() == 'Windows' else "datasets/data/images"
         test_df = pd.read_csv('test_df2.csv')
@@ -217,9 +217,10 @@ if __name__ == "__main__":
     # trainer = Trainer(gpus=1)
     # trainer.fit(model)
 
-    model = XRayModel.load_from_checkpoint(checkpoint_path="lightning_logs/version_2/checkpoints/epoch=88.ckpt")
-    trainer = Trainer()
-    trainer.fit(model)
+    model = XRayModel.load_from_checkpoint(checkpoint_path="lightning_logs/version_3/checkpoints/epoch=5.ckpt")
+    # trainer = Trainer()
+    trainer = Trainer(gpus=1)
+    trainer.test(model=model)
 
     # import platform
     # my_path = "../Datasets/Lungs_Dataset/Xray" if platform.system() == 'Windows' else "datasets/data/images"
@@ -240,7 +241,8 @@ if __name__ == "__main__":
     #     # print(sample_input.shape)
     #     pred = model(sample_input)
     #     # print(pred.shape)
-    #     print(torch.argmax(pred).detach(),label)
+    #     # print(torch.argmax(pred).detach(),label)
+    #     print(accuracy, index)
     #     if torch.argmax(pred).detach() == label:
     #         accuracy += 1
     # print(accuracy/len(my_test_set))
