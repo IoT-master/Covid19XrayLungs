@@ -154,7 +154,7 @@ class XRayModel(LightningModule):
         return {'loss': loss, 'log': tensorboard_logs}
 
     def configure_optimizers(self):
-        return optim.Adam(self.parameters(), lr=0.0001)
+        return optim.Adam(self.parameters(), lr=0.00001)
         # return optim.SGD(self.parameters(), lr=0.01)
 
     def train_dataloader(self):
@@ -180,6 +180,35 @@ class XRayModel(LightningModule):
         dataloader = DataLoader(my_train_dataset, **batch_loader_params)
         return dataloader
 
+   def validation_step(self, batch, batch_idx):
+        images = batch['image']
+        labels = batch['label']
+        preds = self(images)
+        return {'val_loss': F.nll_loss(preds, labels)}
+
+    def validation_epoch_end(self, outputs):
+        avg_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
+        tensorboard_logs = {'val_loss': avg_loss}
+        return {'val_loss': avg_loss, 'log': tensorboard_logs}
+
+    def validation_dataloader(self):
+        import platform
+        my_path = "../Datasets/Lungs_Dataset/Xray" if platform.system() == 'Windows' else "datasets/data/images"
+        test_df = pd.read_csv('test_df2.csv')
+
+        my_test_dataset = CovidLungsDataset(test_df, my_path, transform=tf.Compose([
+                RescaleImage(200),
+                ToTensor(),
+                Normalize(129.7539, 64.6764)
+        ]))
+        batch_loader_params = {
+            "batch_size": 75 if platform.system() == 'Windows' else 5,
+            "shuffle": False,
+            "num_workers": 4
+        }
+        dataloader = DataLoader(my_test_dataset, **batch_loader_params)
+
+        return dataloader
     def test_step(self, batch, batch_idx):
         images = batch['image']
         labels = batch['label']
@@ -188,8 +217,8 @@ class XRayModel(LightningModule):
 
     def test_epoch_end(self, outputs):
         avg_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
-        tensorboard_logs = {'val_loss': avg_loss}
-        return {'val_loss': avg_loss, 'log': tensorboard_logs}
+        tensorboard_logs = {'test_loss': avg_loss}
+        return {'test_loss': avg_loss, 'log': tensorboard_logs}
 
     def test_dataloader(self):
         import platform
@@ -211,16 +240,16 @@ class XRayModel(LightningModule):
         return dataloader
         
 if __name__ == "__main__":
-    # # model = XRayModel()
-    # model = XRayModel.load_from_checkpoint(checkpoint_path="lightning_logs/version_2/checkpoints/epoch=88.ckpt")
-    # # trainer = Trainer()
-    # trainer = Trainer(gpus=1)
-    # trainer.fit(model)
-
+    # model = XRayModel()
     model = XRayModel.load_from_checkpoint(checkpoint_path="lightning_logs/version_3/checkpoints/epoch=5.ckpt")
     # trainer = Trainer()
     trainer = Trainer(gpus=1)
-    trainer.test(model=model)
+    trainer.fit(model)
+
+    # model = XRayModel.load_from_checkpoint(checkpoint_path="lightning_logs/version_3/checkpoints/epoch=5.ckpt")
+    # # trainer = Trainer()
+    # trainer = Trainer(gpus=1)
+    # trainer.test(model=model)
 
     # import platform
     # my_path = "../Datasets/Lungs_Dataset/Xray" if platform.system() == 'Windows' else "datasets/data/images"
