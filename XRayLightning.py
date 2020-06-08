@@ -179,51 +179,68 @@ class XRayModel(LightningModule):
         }
         dataloader = DataLoader(my_train_dataset, **batch_loader_params)
         return dataloader
+
+    def validation_step(self, batch, batch_idx):
+        images = batch['image']
+        labels = batch['label']
+        preds = self(images)
+        return {'val_loss': F.nll_loss(preds, labels)}
+
+    def validation_epoch_end(self, outputs):
+        avg_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
+        tensorboard_logs = {'val_loss': avg_loss}
+        return {'val_loss': avg_loss, 'log': tensorboard_logs}
+
+    def val_dataloader(self):
+        import platform
+        my_path = "../Datasets/Lungs_Dataset/Xray" if platform.system() == 'Windows' else "datasets/data/images"
+        test_df = pd.read_csv('test_df2.csv')
+
+        my_test_dataset = CovidLungsDataset(test_df, my_path, transform=tf.Compose([
+                RescaleImage(200),
+                ToTensor(),
+                Normalize(129.7539, 64.6764)
+        ]))
+        batch_loader_params = {
+            "batch_size": 75 if platform.system() == 'Windows' else 5,
+            "shuffle": False,
+            "num_workers": 4
+        }
+        dataloader = DataLoader(my_test_dataset, **batch_loader_params)
+
+        return dataloader
         
 if __name__ == "__main__":
-    # model = XRayModel()
+    # # model = XRayModel()
+    # model = XRayModel.load_from_checkpoint(checkpoint_path="lightning_logs/version_2/checkpoints/epoch=88.ckpt")
+    # # trainer = Trainer()
+    # trainer = Trainer(gpus=1)
+    # trainer.fit(model)
+
     model = XRayModel.load_from_checkpoint(checkpoint_path="lightning_logs/version_2/checkpoints/epoch=88.ckpt")
-    # trainer = Trainer()
-    trainer = Trainer(gpus=1)
+    trainer = Trainer()
     trainer.fit(model)
 
-# model = XRayModel.load_from_checkpoint(checkpoint_path="lightning_logs/version_0/checkpoints/epoch=0.ckpt")
-# trainer = Trainer()
-# # trainer.test(model)
+    # import platform
+    # my_path = "../Datasets/Lungs_Dataset/Xray" if platform.system() == 'Windows' else "datasets/data/images"
+    # test_df = pd.read_csv('test_df2.csv')
 
-# import platform
-# my_path = "../Datasets/Lungs_Dataset/Xray" if platform.system() == 'Windows' else "datasets/data/images"
-# test_df = pd.read_csv('test_df2.csv')
+    # my_test_set = CovidLungsDataset(test_df, my_path, transform=tf.Compose([
+    #         RescaleImage(200),
+    #         ToTensor(),
+    #         Normalize(129.7539, 64.6764)
+    # ]))
 
-# my_test_set = CovidLungsDataset(test_df, my_path, transform=tf.Compose([
-#         RescaleImage(200),
-#         ToTensor()
-# ]))
-
-# sample = my_test_set.__getitem__(1)
-# image = sample['image']
-# label = sample['label']
-# sample_input = image.unsqueeze(0)
-# print(sample_input.shape)
-# pred = model(sample_input)
-# print(pred.shape)
-# print(pred, label)
-
-
-# import platform
-# my_path = "../Datasets/Lungs_Dataset/Xray" if platform.system() == 'Windows' else "datasets/data/images"
-# train_df = pd.read_csv('train_df2.csv')
-
-# my_train_set = CovidLungsDataset(train_df, my_path, transform=tf.Compose([
-#         RescaleImage(200),
-#         ToTensor()
-# ]))
-
-# sample = my_train_set.__getitem__(0)
-# image = sample['image']
-# label = sample['label']
-# sample_input = image.unsqueeze(0)
-# print(sample_input.shape)
-# model = XRayModel()
-# pred = model(sample_input)
-# print(pred.shape)
+    # accuracy = 0
+    # for index, sample in enumerate(my_test_set):
+    #     sample = my_test_set.__getitem__(index)
+    #     image = sample['image']
+    #     label = sample['label']
+    #     sample_input = image.unsqueeze(0)
+    #     # print(sample_input.shape)
+    #     pred = model(sample_input)
+    #     # print(pred.shape)
+    #     print(torch.argmax(pred).detach(),label)
+    #     if torch.argmax(pred).detach() == label:
+    #         accuracy += 1
+    # print(accuracy/len(my_test_set))
