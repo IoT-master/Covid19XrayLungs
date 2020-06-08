@@ -180,7 +180,7 @@ class XRayModel(LightningModule):
         dataloader = DataLoader(my_train_dataset, **batch_loader_params)
         return dataloader
 
-   def validation_step(self, batch, batch_idx):
+    def validation_step(self, batch, batch_idx):
         images = batch['image']
         labels = batch['label']
         preds = self(images)
@@ -191,7 +191,7 @@ class XRayModel(LightningModule):
         tensorboard_logs = {'val_loss': avg_loss}
         return {'val_loss': avg_loss, 'log': tensorboard_logs}
 
-    def validation_dataloader(self):
+    def val_dataloader(self):
         import platform
         my_path = "../Datasets/Lungs_Dataset/Xray" if platform.system() == 'Windows' else "datasets/data/images"
         test_df = pd.read_csv('test_df2.csv')
@@ -209,6 +209,7 @@ class XRayModel(LightningModule):
         dataloader = DataLoader(my_test_dataset, **batch_loader_params)
 
         return dataloader
+
     def test_step(self, batch, batch_idx):
         images = batch['image']
         labels = batch['label']
