@@ -107,9 +107,9 @@ class CovidLungsDataset(Dataset):
         return sample
 
 class XRayModel(LightningModule, out1):
-    def __init__(self):
+    def __init__(self,out1):
         super(XRayModel, self).__init__()
-        self.conv1 = nn.Conv2d(1, ou1, 21, 1)
+        self.conv1 = nn.Conv2d(1, out1, 21, 1)
         self.norm1 = nn.BatchNorm2d(out1)
         self.conv2 = nn.Conv2d(out1, 45, 21, 1)  
         self.norm2 = nn.BatchNorm2d(45)
@@ -154,7 +154,7 @@ class XRayModel(LightningModule, out1):
         return {'loss': loss, 'log': tensorboard_logs}
 
     def configure_optimizers(self):
-        return optim.Adam(self.parameters(), lr=0.0001)
+        return optim.Adam(self.parameters(), lr=0.01)
         # return optim.SGD(self.parameters(), lr=0.01)
 
     def train_dataloader(self):
@@ -241,8 +241,8 @@ class XRayModel(LightningModule, out1):
         return dataloader
         
 if __name__ == "__main__":
-    # model = XRayModel()
-    model = XRayModel.load_from_checkpoint(checkpoint_path="lightning_logs/version_3/checkpoints/epoch=5.ckpt")
+    model = XRayModel(out1=40)
+    # model = XRayModel.load_from_checkpoint(checkpoint_path="lightning_logs/version_3/checkpoints/epoch=5.ckpt")
     # trainer = Trainer()
     trainer = Trainer(gpus=1)
     trainer.fit(model)
