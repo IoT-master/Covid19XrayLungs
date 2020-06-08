@@ -106,9 +106,11 @@ class CovidLungsDataset(Dataset):
 
         return sample
 
-class XRayModel(LightningModule, out1):
-    def __init__(self,out1):
+class XRayModel(LightningModule):
+    def __init__(self,out1, lr, batch_size):
         super(XRayModel, self).__init__()
+        self.lr=lr
+        self.batch_size=batch_size
         self.conv1 = nn.Conv2d(1, out1, 21, 1)
         self.norm1 = nn.BatchNorm2d(out1)
         self.conv2 = nn.Conv2d(out1, 45, 21, 1)  
@@ -154,7 +156,7 @@ class XRayModel(LightningModule, out1):
         return {'loss': loss, 'log': tensorboard_logs}
 
     def configure_optimizers(self):
-        return optim.Adam(self.parameters(), lr=0.01)
+        return optim.Adam(self.parameters(), lr=self.lr)
         # return optim.SGD(self.parameters(), lr=0.01)
 
     def train_dataloader(self):
@@ -173,7 +175,7 @@ class XRayModel(LightningModule, out1):
                 Normalize(129.7539, 64.6764)
         ]))
         batch_loader_params = {
-            "batch_size": 75 if platform.system() == 'Windows' else 5,
+            "batch_size": self.batch_size if platform.system() == 'Windows' else 5,
             "shuffle": True,
             "num_workers": 4
         }
@@ -241,11 +243,22 @@ class XRayModel(LightningModule, out1):
         return dataloader
         
 if __name__ == "__main__":
-    model = XRayModel(out1=40)
-    # model = XRayModel.load_from_checkpoint(checkpoint_path="lightning_logs/version_3/checkpoints/epoch=5.ckpt")
-    # trainer = Trainer()
-    trainer = Trainer(gpus=1)
-    trainer.fit(model)
+    from itertools import product
+    from pytorch_lightning.loggers import TensorBoardLogger
+    parameters = dict(
+        lr = [.01, .001],
+        batch_size = [25, 50, 75],
+        output_conv1 = [30, 40, 50]
+    )
+    param_values = [v for v in parameters.values()]
+    for lr, batch_size, output_conv1 in product(*param_values):
+        logger = TensorBoardLogger("logs", name='experiment', version=f'lr={lr} batch_size={batch_size} output_conv1={output_conv1}')
+        print(lr, batch_size, output_conv1)
+        model = XRayModel(out1=output_conv1, lr=lr, batch_size=batch_size)
+        # model = XRayModel.load_from_checkpoint(out1=40, checkpoint_path="lightning_logs/version_0/checkpoints/epoch=10.ckpt")
+        # trainer = Trainer()
+        trainer = Trainer(gpus=1, min_epochs=1, max_epochs=10, logger=logger)
+        trainer.fit(model)
 
     # model = XRayModel.load_from_checkpoint(checkpoint_path="lightning_logs/version_3/checkpoints/epoch=5.ckpt")
     # # trainer = Trainer()
