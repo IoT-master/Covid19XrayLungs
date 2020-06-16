@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 from torch.utils.data import DataLoader, Dataset
 import torch.optim as optim
+from torch.optim import lr_scheduler
 
 
 class Normalize(object):
@@ -154,8 +155,11 @@ class XRayModel(LightningModule):
         return {'loss': loss, 'log': tensorboard_logs}
 
     def configure_optimizers(self):
-        return optim.Adam(self.parameters(), lr=0.00001)
+        optimizer = optim.Adam(self.parameters(), lr=0.01)
         # return optim.SGD(self.parameters(), lr=0.01)
+        # scheduler
+        my_lr_scheduler = lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)
+        return [optimizer], [my_lr_scheduler]
 
     def train_dataloader(self):
         import platform
@@ -243,8 +247,8 @@ class XRayModel(LightningModule):
 if __name__ == "__main__":
     # model = XRayModel()
     model = XRayModel.load_from_checkpoint(checkpoint_path="lightning_logs/version_3/checkpoints/epoch=5.ckpt")
-    # trainer = Trainer()
-    trainer = Trainer(gpus=1)
+    trainer = Trainer()
+    # trainer = Trainer(gpus=1)
     trainer.fit(model)
 
     # model = XRayModel.load_from_checkpoint(checkpoint_path="lightning_logs/version_3/checkpoints/epoch=5.ckpt")
